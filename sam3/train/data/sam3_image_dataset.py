@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import torch
 import torch.utils.data
 import torchvision
-from decord import cpu, VideoReader
+from sam3.train.data.decord_stub import cpu, VideoReader  # Mac stub
 from iopath.common.file_io import g_pathmgr
 from PIL import Image as PILImage
 from PIL.Image import DecompressionBombError

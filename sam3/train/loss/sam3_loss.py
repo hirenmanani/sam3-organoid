@@ -23,14 +23,14 @@ class DummyLoss(torch.nn.Module):
         self.device = torch.device(device)
 
     def forward(self, *args, **kwargs):
-        return {self.core_loss_key: torch.tensor(0.0, device=self.device)}
+        return {self.core_loss_key: torch.tensor(0.0, device="cpu", requires_grad=True)}
 
     def accumulate(self, out_dict):
         """
         Called by iterative losses.
         """
         if self.core_loss_key not in out_dict:
-            out_dict[self.core_loss_key] = torch.tensor(0.0, device=self.device)
+            out_dict[self.core_loss_key] = torch.tensor(0.0, device="cpu", requires_grad=True)
         return out_dict
 
 

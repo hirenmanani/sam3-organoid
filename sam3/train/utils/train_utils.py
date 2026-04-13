@@ -198,13 +198,13 @@ class MemMeter:
         self._allow_updates = True
 
     def update(self, n=1, reset_peak_usage=True):
-        self.val = torch.cuda.max_memory_allocated() // 1e9
+        self.val = 0 // 1e9
         self.sum += self.val * n
         self.count += n
         self.avg = self.sum / self.count
         self.peak = max(self.peak, self.val)
         if reset_peak_usage:
-            torch.cuda.reset_peak_memory_stats()
+            pass  # disabled on Mac
 
     def __str__(self):
         fmtstr = (

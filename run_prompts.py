@@ -1,0 +1,75 @@
+import torch
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+import cv2
+from sam3.model_builder import build_sam3_image_model
+from sam3.model.sam3_image_processor import Sam3Processor
+
+IMAGE_PATH = "images/ctl/231206_Rac1i_50uM_ctl_D2_(15).jpg"
+SCORE_THRESHOLD = 0.25
+
+PROMPTS = [
+    "circular vesicle",
+    "spherical vesicle",
+    "vesicle with lumen",
+    "thin-walled vesicle",
+    "thick-walled vesicle",
+    "circular lipid droplet",
+    "round hollow structure",
+]
+
+print("Loading model once...")
+model = build_sam3_image_model(checkpoint_path="./checkpoints/sam3.pt", device="cpu")
+processor = Sam3Processor(model)
+print("Model loaded!")
+
+image = Image.open(IMAGE_PATH).convert("RGB")
+image_np = np.array(image)
+
+for prompt in PROMPTS:
+    print(f"\nTrying prompt: '{prompt}'")
+    inference_state = processor.set_image(image)
+    output = processor.set_text_prompt(state=inference_state, prompt=prompt)
+
+    masks  = output["masks"]
+    boxes  = output["boxes"]
+    scores = output["scores"]
+
+    filtered = [(m, b, s) for m, b, s in zip(masks, boxes, scores) if s > SCORE_THRESHOLD]
+    print(f"  --> {len(filtered)} detections")
+
+    if len(filtered) == 0:
+        continue
+
+    fig, ax = plt.subplots(1, 1, figsize=(18, 12))
+    ax.imshow(image_np, cmap='gray')
+    colors = plt.cm.hsv(np.linspace(0, 1, max(len(filtered), 1)))
+
+    for i, (mask, box, score) in enumerate(filtered):
+        color = colors[i]
+        m = mask[0].cpu().numpy().astype(np.uint8)
+
+        overlay = np.zeros((*image_np.shape[:2], 4))
+        overlay[m > 0] = [*color[:3], 0.3]
+        ax.imshow(overlay)
+
+        contours, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for cnt in contours:
+            pts = cnt.reshape(-1, 2)
+            poly = plt.Polygon(pts, fill=False, edgecolor=color[:3], linewidth=1.8)
+            ax.add_patch(poly)
+
+        x1, y1, x2, y2 = box
+        ax.text(x1, y1-4, f"{score:.2f}", color=color[:3], fontsize=5, fontweight='bold')
+
+    safe_name = prompt.replace(" ", "_").replace("-", "_").replace("/", "_")
+    filename = f"result_{safe_name}.png"
+    ax.set_title(f"Prompt: '{prompt}' — {len(filtered)} detections", fontsize=11)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.savefig(filename, dpi=200, bbox_inches='tight')
+    plt.close()
+    print(f"  --> Saved to {filename}")
+
+print("\nDone! All results saved.")

@@ -698,6 +698,8 @@ class Trainer:
                         loss_key, loss = loss_dict.popitem()
 
                         if loss_key in loss_mts:
+                            if loss_key not in loss_mts:
+                                loss_mts[loss_key] = AverageMeter(loss_key, self.device, ":.2e")
                             loss_mts[loss_key].update(loss.item(), batch_size)
 
                         for k, v in extra_losses.items():
@@ -844,8 +846,8 @@ class Trainer:
 
                 # Optimizer step: the scaler will make sure gradients are not
                 # applied if the gradients are infinite
-                self.scaler.step(self.optim.optimizer)
-                self.scaler.update()
+                self.optim.optimizer.step()
+                pass  # scaler disabled on Mac
 
                 # measure elapsed time
                 batch_time_meter.update(time.time() - end)
@@ -956,7 +958,9 @@ class Trainer:
                     else:
                         return
 
-                self.scaler.scale(loss).backward()
+                loss.backward()
+                if loss_key not in loss_mts:
+                    loss_mts[loss_key] = AverageMeter(loss_key, self.device, ":.2e")
                 loss_mts[loss_key].update(loss.item(), batch_size)
                 for extra_loss_key, extra_loss in extra_losses.items():
                     if extra_loss_key not in extra_loss_mts:
