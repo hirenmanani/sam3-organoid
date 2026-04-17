@@ -351,9 +351,9 @@ class TransformerDecoder(nn.Module):
             assert coords_h.shape == (H,)
             assert coords_w.shape == (W,)
 
-        deltas_y = coords_h.view(1, -1, 1) - boxes_xyxy.reshape(-1, 1, 4)[:, :, 1:4:2]
+        deltas_y = coords_h.to(boxes_xyxy.device).view(1, -1, 1) - boxes_xyxy.reshape(-1, 1, 4)[:, :, 1:4:2]
         deltas_y = deltas_y.view(bs, num_queries, -1, 2)
-        deltas_x = coords_w.view(1, -1, 1) - boxes_xyxy.reshape(-1, 1, 4)[:, :, 0:3:2]
+        deltas_x = coords_w.to(boxes_xyxy.device).view(1, -1, 1) - boxes_xyxy.reshape(-1, 1, 4)[:, :, 0:3:2]
         deltas_x = deltas_x.view(bs, num_queries, -1, 2)
 
         if self.boxRPB in ["log", "both"]:

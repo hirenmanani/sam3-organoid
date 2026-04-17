@@ -958,6 +958,10 @@ class Trainer:
                     else:
                         return
 
+                if loss.item() > 100:
+                    logging.warning(f"Skipping batch with large loss: {loss.item():.2f}")
+                    self.optim.zero_grad(set_to_none=True)
+                    continue
                 loss.backward()
                 if loss_key not in loss_mts:
                     loss_mts[loss_key] = AverageMeter(loss_key, self.device, ":.2e")
