@@ -296,7 +296,23 @@ class Trainer:
         else:
             raise ValueError(f"Unsupported accelerator: {accelerator}")
 
+    def _freeze_unused_params(self):
+        FREEZE_PATTERNS = [
+            'backbone.vision_backbone.convs.0.',
+            'backbone.vision_backbone.convs.1.',
+            'backbone.vision_backbone.convs.3.',
+            'backbone.language_backbone.encoder.text_projection',
+        ]
+        frozen = []
+        for name, param in self.model.named_parameters():
+            if any(name.startswith(p) or name == p for p in FREEZE_PATTERNS):
+                param.requires_grad = False
+                frozen.append(name)
+        import logging
+        logging.info(f"Froze {len(frozen)} unused parameters to avoid DDP error")
+
     def _setup_ddp_distributed_training(self, distributed_conf, accelerator):
+        self._freeze_unused_params()
         assert isinstance(self.model, torch.nn.Module)
 
         self.model = nn.parallel.DistributedDataParallel(

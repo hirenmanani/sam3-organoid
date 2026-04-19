@@ -273,11 +273,6 @@ class FilterEmptyTargets(FilterDataPointQueries):
 
     def identify_queries_to_filter(self, datapoint):
         self.obj_ids_to_filter = set()
-
-        for img_id in range(len(datapoint.images)):
-            for obj_id, obj in enumerate(datapoint.images[img_id].objects):
-                if obj.area < 1e-6:
-                    self.obj_ids_to_filter.add((img_id, obj_id))
         self.find_ids_to_filter = set()
 
 

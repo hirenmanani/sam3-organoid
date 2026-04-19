@@ -1,0 +1,10 @@
+universe = vanilla
+executable = /home/hmanani/run_sam3_fix.sh
+log    = /home/hmanani/sam3_fix_train.log
+output = /home/hmanani/sam3_fix_train.out
+error  = /home/hmanani/sam3_fix_train.err
++request_gpus = 1
+request_CPUs  = 8
+request_memory = 32GB
+Requirements = (CUDAGlobalMemoryMB >= 16000)
+queue

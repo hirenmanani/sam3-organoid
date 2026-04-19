@@ -218,12 +218,18 @@ class COCO_FROM_JSON:
                 annotation["object_id"] = annotation["id"]
                 annotation["is_crowd"] = ann["iscrowd"]
 
-                normalized_boxes = convert_boxlist_to_normalized_tensor(
-                    [ann["bbox"]], width, height
-                )
-                bbox = normalized_boxes[0]
+                raw_bbox = ann["bbox"]
+                # Skip normalization if bbox is already normalized (values in [0,1])
+                if max(raw_bbox) <= 1.0:
+                    import torch
+                    bbox = torch.tensor(raw_bbox, dtype=torch.float32)
+                else:
+                    normalized_boxes = convert_boxlist_to_normalized_tensor(
+                        [raw_bbox], width, height
+                    )
+                    bbox = normalized_boxes[0]
 
-                annotation["area"] = (bbox[2] * bbox[3]).item()
+                annotation["area"] = (bbox[2] * width) * (bbox[3] * height)
                 annotation["bbox"] = bbox
 
                 if (

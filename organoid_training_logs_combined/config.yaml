@@ -1,6 +1,6 @@
 paths:
-  roboflow_vl_100_root: /home/hmanani/data/augmented
-  experiment_log_dir: /home/hmanani/sam3/organoid_training_logs
+  roboflow_vl_100_root: /home/hmanani/data/augmented_combined
+  experiment_log_dir: /home/hmanani/sam3/organoid_training_logs_combined
   bpe_path: /home/hmanani/sam3/sam3/assets/bpe_simple_vocab_16e6.txt.gz
 roboflow_train:
   num_images: null
@@ -85,7 +85,6 @@ roboflow_train:
       pad_n_queries: 200
       pad_scale_pos: 1.0
     loss_fn_semantic_seg: null
-    scale_by_find_batch_size: ${scratch.scale_by_find_batch_size}
 scratch:
   enable_segmentation: false
   d_model: 256

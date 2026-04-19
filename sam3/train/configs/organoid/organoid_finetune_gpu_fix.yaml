@@ -4,7 +4,7 @@ defaults:
 
 paths:
   roboflow_vl_100_root: /home/hmanani/data/augmented
-  experiment_log_dir: /home/hmanani/sam3/organoid_training_logs
+  experiment_log_dir: /home/hmanani/sam3/organoid_training_logs_fix
   bpe_path: /home/hmanani/sam3/sam3/assets/bpe_simple_vocab_16e6.txt.gz
 
 roboflow_train:
@@ -116,7 +116,7 @@ scratch:
   matcher:
     _target_: sam3.train.matcher.BinaryHungarianMatcherV2
     focal: true
-    cost_class: 2.0
+    cost_class: 0.1
     cost_bbox: 5.0
     cost_giou: 2.0
     alpha: 0.25
@@ -141,7 +141,7 @@ scratch:
   context_length: 2
   gather_pred_via_filesys: false
 
-  lr_scale: 0.0001
+  lr_scale: 0.001
   lr_transformer: ${times:8e-4,${scratch.lr_scale}}
   lr_vision_backbone: ${times:2.5e-4,${scratch.lr_scale}}
   lr_language_backbone: ${times:5e-5,${scratch.lr_scale}}

@@ -1,6 +1,6 @@
 paths:
-  roboflow_vl_100_root: /home/hmanani/data/augmented
-  experiment_log_dir: /home/hmanani/sam3/organoid_training_logs
+  roboflow_vl_100_root: /home/hmanani/data/augmented_combined
+  experiment_log_dir: /home/hmanani/sam3/organoid_training_logs_combined
   bpe_path: /home/hmanani/sam3/sam3/assets/bpe_simple_vocab_16e6.txt.gz
 roboflow_train:
   num_images: null
@@ -18,48 +18,68 @@ roboflow_train:
     - _target_: sam3.train.transforms.basic_for_api.RandomResizeAPI
       sizes:
         _target_: sam3.train.transforms.basic.get_random_resize_scales
-        size: ${scratch.resolution}
+        size: 1008
         min_size: 480
         rounded: false
       max_size:
         _target_: sam3.train.transforms.basic.get_random_resize_max_size
-        size: ${scratch.resolution}
+        size: 1008
       square: true
-      consistent_transform: ${scratch.consistent_transform}
+      consistent_transform: false
     - _target_: sam3.train.transforms.basic_for_api.PadToSizeAPI
-      size: ${scratch.resolution}
-      consistent_transform: ${scratch.consistent_transform}
+      size: 1008
+      consistent_transform: false
     - _target_: sam3.train.transforms.basic_for_api.ToTensorAPI
     - _target_: sam3.train.transforms.filter_query_transforms.FlexibleFilterFindGetQueries
       query_filter:
         _target_: sam3.train.transforms.filter_query_transforms.FilterEmptyTargets
     - _target_: sam3.train.transforms.basic_for_api.NormalizeAPI
-      mean: ${scratch.train_norm_mean}
-      std: ${scratch.train_norm_std}
+      mean:
+      - 0.5
+      - 0.5
+      - 0.5
+      std:
+      - 0.5
+      - 0.5
+      - 0.5
     - _target_: sam3.train.transforms.filter_query_transforms.FlexibleFilterFindGetQueries
       query_filter:
         _target_: sam3.train.transforms.filter_query_transforms.FilterEmptyTargets
   - _target_: sam3.train.transforms.filter_query_transforms.FlexibleFilterFindGetQueries
     query_filter:
       _target_: sam3.train.transforms.filter_query_transforms.FilterFindQueriesWithTooManyOut
-      max_num_objects: ${scratch.max_ann_per_img}
+      max_num_objects: 200
   val_transforms:
   - _target_: sam3.train.transforms.basic_for_api.ComposeAPI
     transforms:
     - _target_: sam3.train.transforms.basic_for_api.RandomResizeAPI
-      sizes: ${scratch.resolution}
+      sizes: 1008
       max_size:
         _target_: sam3.train.transforms.basic.get_random_resize_max_size
-        size: ${scratch.resolution}
+        size: 1008
       square: true
       consistent_transform: false
     - _target_: sam3.train.transforms.basic_for_api.ToTensorAPI
     - _target_: sam3.train.transforms.basic_for_api.NormalizeAPI
-      mean: ${scratch.train_norm_mean}
-      std: ${scratch.train_norm_std}
+      mean:
+      - 0.5
+      - 0.5
+      - 0.5
+      std:
+      - 0.5
+      - 0.5
+      - 0.5
   loss:
     _target_: sam3.train.loss.sam3_loss.Sam3LossWrapper
-    matcher: ${scratch.matcher}
+    matcher:
+      _target_: sam3.train.matcher.BinaryHungarianMatcherV2
+      focal: true
+      cost_class: 2.0
+      cost_bbox: 5.0
+      cost_giou: 2.0
+      alpha: 0.25
+      gamma: 2
+      stable: false
     o2m_weight: 2.0
     o2m_matcher:
       _target_: sam3.train.matcher.BinaryOneToManyMatcher
@@ -85,13 +105,12 @@ roboflow_train:
       pad_n_queries: 200
       pad_scale_pos: 1.0
     loss_fn_semantic_seg: null
-    scale_by_find_batch_size: ${scratch.scale_by_find_batch_size}
 scratch:
   enable_segmentation: false
   d_model: 256
   pos_embed:
     _target_: sam3.model.position_encoding.PositionEmbeddingSine
-    num_pos_feats: ${scratch.d_model}
+    num_pos_feats: 256
     normalize: true
     scale: null
     temperature: 10000
@@ -101,7 +120,7 @@ scratch:
     max_dets_per_img: -1
     use_original_ids: true
     use_original_sizes_box: true
-    use_presence: ${scratch.use_presence_eval}
+    use_presence: true
   matcher:
     _target_: sam3.train.matcher.BinaryHungarianMatcherV2
     focal: true
@@ -139,9 +158,9 @@ scratch:
   context_length: 2
   gather_pred_via_filesys: false
   lr_scale: 0.0001
-  lr_transformer: ${times:8e-4,${scratch.lr_scale}}
-  lr_vision_backbone: ${times:2.5e-4,${scratch.lr_scale}}
-  lr_language_backbone: ${times:5e-5,${scratch.lr_scale}}
+  lr_transformer: 8.0e-08
+  lr_vision_backbone: 2.5000000000000002e-08
+  lr_language_backbone: 5.0e-09
   lrd_vision_backbone: 0.9
   wd: 0.1
   scheduler_timescale: 20
@@ -151,7 +170,7 @@ scratch:
   collate_fn_val:
     _target_: sam3.train.data.collator.collate_fn_api
     _partial_: true
-    repeats: ${scratch.hybrid_repeats}
+    repeats: 1
     dict_key: roboflow100
     with_seg_masks: true
   gradient_accumulation_steps: 1
@@ -159,7 +178,7 @@ scratch:
   collate_fn:
     _target_: sam3.train.data.collator.collate_fn_api
     _partial_: true
-    repeats: ${scratch.hybrid_repeats}
+    repeats: 1
     dict_key: roboflow100
     with_seg_masks: true
 trainer:
@@ -172,14 +191,84 @@ trainer:
   seed_value: 42
   val_epoch_freq: 5
   mode: train
-  gradient_accumulation_steps: ${scratch.gradient_accumulation_steps}
+  gradient_accumulation_steps: 1
   distributed:
     backend: nccl
     find_unused_parameters: false
     gradient_as_bucket_view: true
   loss:
-    all: ${roboflow_train.loss}
-    roboflow100: ${roboflow_train.loss}
+    all:
+      _target_: sam3.train.loss.sam3_loss.Sam3LossWrapper
+      matcher:
+        _target_: sam3.train.matcher.BinaryHungarianMatcherV2
+        focal: true
+        cost_class: 2.0
+        cost_bbox: 5.0
+        cost_giou: 2.0
+        alpha: 0.25
+        gamma: 2
+        stable: false
+      o2m_weight: 2.0
+      o2m_matcher:
+        _target_: sam3.train.matcher.BinaryOneToManyMatcher
+        alpha: 0.3
+        threshold: 0.4
+        topk: 4
+      use_o2m_matcher_on_o2m_aux: false
+      loss_fns_find:
+      - _target_: sam3.train.loss.loss_fns.Boxes
+        weight_dict:
+          loss_bbox: 5.0
+          loss_giou: 2.0
+      - _target_: sam3.train.loss.loss_fns.IABCEMdetr
+        weak_loss: false
+        weight_dict:
+          loss_ce: 20.0
+          presence_loss: 20.0
+        pos_weight: 10.0
+        alpha: 0.25
+        gamma: 2
+        use_presence: true
+        pos_focal: false
+        pad_n_queries: 200
+        pad_scale_pos: 1.0
+      loss_fn_semantic_seg: null
+    roboflow100:
+      _target_: sam3.train.loss.sam3_loss.Sam3LossWrapper
+      matcher:
+        _target_: sam3.train.matcher.BinaryHungarianMatcherV2
+        focal: true
+        cost_class: 2.0
+        cost_bbox: 5.0
+        cost_giou: 2.0
+        alpha: 0.25
+        gamma: 2
+        stable: false
+      o2m_weight: 2.0
+      o2m_matcher:
+        _target_: sam3.train.matcher.BinaryOneToManyMatcher
+        alpha: 0.3
+        threshold: 0.4
+        topk: 4
+      use_o2m_matcher_on_o2m_aux: false
+      loss_fns_find:
+      - _target_: sam3.train.loss.loss_fns.Boxes
+        weight_dict:
+          loss_bbox: 5.0
+          loss_giou: 2.0
+      - _target_: sam3.train.loss.loss_fns.IABCEMdetr
+        weak_loss: false
+        weight_dict:
+          loss_ce: 20.0
+          presence_loss: 20.0
+        pos_weight: 10.0
+        alpha: 0.25
+        gamma: 2
+        use_presence: true
+        pos_focal: false
+        pad_n_queries: 200
+        pad_scale_pos: 1.0
+      loss_fn_semantic_seg: null
     default:
       _target_: sam3.train.loss.sam3_loss.DummyLoss
   data:
@@ -187,8 +276,51 @@ trainer:
       _target_: sam3.train.data.torch_dataset.TorchDataset
       dataset:
         _target_: sam3.train.data.sam3_image_dataset.Sam3ImageDataset
-        limit_ids: ${roboflow_train.num_images}
-        transforms: ${roboflow_train.train_transforms}
+        limit_ids: null
+        transforms:
+        - _target_: sam3.train.transforms.basic_for_api.ComposeAPI
+          transforms:
+          - _target_: sam3.train.transforms.filter_query_transforms.FlexibleFilterFindGetQueries
+            query_filter:
+              _target_: sam3.train.transforms.filter_query_transforms.FilterCrowds
+          - _target_: sam3.train.transforms.point_sampling.RandomizeInputBbox
+            box_noise_std: 0.1
+            box_noise_max: 20
+          - _target_: sam3.train.transforms.segmentation.DecodeRle
+          - _target_: sam3.train.transforms.basic_for_api.RandomResizeAPI
+            sizes:
+              _target_: sam3.train.transforms.basic.get_random_resize_scales
+              size: 1008
+              min_size: 480
+              rounded: false
+            max_size:
+              _target_: sam3.train.transforms.basic.get_random_resize_max_size
+              size: 1008
+            square: true
+            consistent_transform: false
+          - _target_: sam3.train.transforms.basic_for_api.PadToSizeAPI
+            size: 1008
+            consistent_transform: false
+          - _target_: sam3.train.transforms.basic_for_api.ToTensorAPI
+          - _target_: sam3.train.transforms.filter_query_transforms.FlexibleFilterFindGetQueries
+            query_filter:
+              _target_: sam3.train.transforms.filter_query_transforms.FilterEmptyTargets
+          - _target_: sam3.train.transforms.basic_for_api.NormalizeAPI
+            mean:
+            - 0.5
+            - 0.5
+            - 0.5
+            std:
+            - 0.5
+            - 0.5
+            - 0.5
+          - _target_: sam3.train.transforms.filter_query_transforms.FlexibleFilterFindGetQueries
+            query_filter:
+              _target_: sam3.train.transforms.filter_query_transforms.FilterEmptyTargets
+        - _target_: sam3.train.transforms.filter_query_transforms.FlexibleFilterFindGetQueries
+          query_filter:
+            _target_: sam3.train.transforms.filter_query_transforms.FilterFindQueriesWithTooManyOut
+            max_num_objects: 200
         load_segmentation: true
         max_ann_per_img: 500000
         multiplier: 1
@@ -196,14 +328,19 @@ trainer:
         max_val_queries: 50000
         training: true
         use_caching: false
-        img_folder: ${paths.roboflow_vl_100_root}/${roboflow_train.supercategory}/
-        ann_file: ${paths.roboflow_vl_100_root}/${roboflow_train.supercategory}/_annotations_normalized.coco.json
+        img_folder: /home/hmanani/data/augmented_combined/train/
+        ann_file: /home/hmanani/data/augmented_combined/train/_annotations_normalized.coco.json
       shuffle: true
-      batch_size: ${scratch.train_batch_size}
-      num_workers: ${scratch.num_train_workers}
+      batch_size: 2
+      num_workers: 4
       pin_memory: true
       drop_last: true
-      collate_fn: ${scratch.collate_fn}
+      collate_fn:
+        _target_: sam3.train.data.collator.collate_fn_api
+        _partial_: true
+        repeats: 1
+        dict_key: roboflow100
+        with_seg_masks: true
     val:
       _target_: sam3.train.data.torch_dataset.TorchDataset
       dataset:
@@ -214,39 +351,68 @@ trainer:
           include_negatives: true
           category_chunk_size: 2
           _partial_: true
-        img_folder: ${paths.roboflow_vl_100_root}/${roboflow_train.supercategory}/
-        ann_file: ${paths.roboflow_vl_100_root}/${roboflow_train.supercategory}/_annotations_normalized.coco.json
-        transforms: ${roboflow_train.val_transforms}
+        img_folder: /home/hmanani/data/augmented_combined/train/
+        ann_file: /home/hmanani/data/augmented_combined/train/_annotations_normalized.coco.json
+        transforms:
+        - _target_: sam3.train.transforms.basic_for_api.ComposeAPI
+          transforms:
+          - _target_: sam3.train.transforms.basic_for_api.RandomResizeAPI
+            sizes: 1008
+            max_size:
+              _target_: sam3.train.transforms.basic.get_random_resize_max_size
+              size: 1008
+            square: true
+            consistent_transform: false
+          - _target_: sam3.train.transforms.basic_for_api.ToTensorAPI
+          - _target_: sam3.train.transforms.basic_for_api.NormalizeAPI
+            mean:
+            - 0.5
+            - 0.5
+            - 0.5
+            std:
+            - 0.5
+            - 0.5
+            - 0.5
         max_ann_per_img: 100000
         multiplier: 1
         training: false
       shuffle: false
-      batch_size: ${scratch.val_batch_size}
-      num_workers: ${scratch.num_val_workers}
+      batch_size: 1
+      num_workers: 2
       pin_memory: true
       drop_last: false
-      collate_fn: ${scratch.collate_fn_val}
+      collate_fn:
+        _target_: sam3.train.data.collator.collate_fn_api
+        _partial_: true
+        repeats: 1
+        dict_key: roboflow100
+        with_seg_masks: true
   model:
     _target_: sam3.model_builder.build_sam3_image_model
-    bpe_path: ${paths.bpe_path}
+    bpe_path: /home/hmanani/sam3/sam3/assets/bpe_simple_vocab_16e6.txt.gz
     checkpoint_path: /home/hmanani/sam3/checkpoints/sam3.pt
     device: cuda
     eval_mode: false
-    enable_segmentation: ${scratch.enable_segmentation}
+    enable_segmentation: false
   meters:
     val:
       roboflow100:
         detection:
           _target_: sam3.eval.coco_writer.PredictionDumper
           iou_type: bbox
-          dump_dir: ${launcher.experiment_log_dir}/dumps/organoid
+          dump_dir: /home/hmanani/sam3/organoid_training_logs_combined/dumps/organoid
           merge_predictions: true
-          postprocessor: ${scratch.original_box_postprocessor}
-          gather_pred_via_filesys: ${scratch.gather_pred_via_filesys}
+          postprocessor:
+            _target_: sam3.eval.postprocessors.PostProcessImage
+            max_dets_per_img: -1
+            use_original_ids: true
+            use_original_sizes_box: true
+            use_presence: true
+          gather_pred_via_filesys: false
           maxdets: 100
           pred_file_evaluators:
           - _target_: sam3.eval.coco_eval_offline.CocoEvaluatorOfflineWithPredFileEvaluators
-            gt_path: ${paths.roboflow_vl_100_root}/${roboflow_train.supercategory}/_annotations_normalized.coco.json
+            gt_path: /home/hmanani/data/augmented_combined/train/_annotations_normalized.coco.json
             tide: false
             iou_type: bbox
   optim:
@@ -262,7 +428,7 @@ trainer:
     param_group_modifiers:
     - _target_: sam3.train.optim.optimizer.layer_decay_param_modifier
       _partial_: true
-      layer_decay_value: ${scratch.lrd_vision_backbone}
+      layer_decay_value: 0.9
       apply_to: backbone.vision_backbone.trunk
       overrides:
       - pattern: '*pos_embed*'
@@ -271,30 +437,30 @@ trainer:
       lr:
       - scheduler:
           _target_: sam3.train.optim.schedulers.InverseSquareRootParamScheduler
-          base_lr: ${scratch.lr_transformer}
-          timescale: ${scratch.scheduler_timescale}
-          warmup_steps: ${scratch.scheduler_warmup}
-          cooldown_steps: ${scratch.scheduler_cooldown}
+          base_lr: 8.0e-08
+          timescale: 20
+          warmup_steps: 20
+          cooldown_steps: 20
       - scheduler:
           _target_: sam3.train.optim.schedulers.InverseSquareRootParamScheduler
-          base_lr: ${scratch.lr_vision_backbone}
-          timescale: ${scratch.scheduler_timescale}
-          warmup_steps: ${scratch.scheduler_warmup}
-          cooldown_steps: ${scratch.scheduler_cooldown}
+          base_lr: 2.5000000000000002e-08
+          timescale: 20
+          warmup_steps: 20
+          cooldown_steps: 20
         param_names:
         - backbone.vision_backbone.*
       - scheduler:
           _target_: sam3.train.optim.schedulers.InverseSquareRootParamScheduler
-          base_lr: ${scratch.lr_language_backbone}
-          timescale: ${scratch.scheduler_timescale}
-          warmup_steps: ${scratch.scheduler_warmup}
-          cooldown_steps: ${scratch.scheduler_cooldown}
+          base_lr: 5.0e-09
+          timescale: 20
+          warmup_steps: 20
+          cooldown_steps: 20
         param_names:
         - backbone.language_backbone.*
       weight_decay:
       - scheduler:
           _target_: fvcore.common.param_scheduler.ConstantParamScheduler
-          value: ${scratch.wd}
+          value: 0.1
       - scheduler:
           _target_: fvcore.common.param_scheduler.ConstantParamScheduler
           value: 0.0
@@ -303,21 +469,21 @@ trainer:
         module_cls_names:
         - torch.nn.LayerNorm
   checkpoint:
-    save_dir: ${launcher.experiment_log_dir}/checkpoints
+    save_dir: /home/hmanani/sam3/organoid_training_logs_combined/checkpoints
     save_freq: 1
   logging:
     tensorboard_writer:
       _target_: sam3.train.utils.logger.make_tensorboard_logger
-      log_dir: ${launcher.experiment_log_dir}/tensorboard
+      log_dir: /home/hmanani/sam3/organoid_training_logs_combined/tensorboard
       flush_secs: 120
       should_log: true
     wandb_writer: null
-    log_dir: ${launcher.experiment_log_dir}/logs
+    log_dir: /home/hmanani/sam3/organoid_training_logs_combined/logs
     log_freq: 10
 launcher:
   num_nodes: 1
   gpus_per_node: 1
-  experiment_log_dir: ${paths.experiment_log_dir}
+  experiment_log_dir: /home/hmanani/sam3/organoid_training_logs_combined
   multiprocessing_context: spawn
 submitit:
   account: null

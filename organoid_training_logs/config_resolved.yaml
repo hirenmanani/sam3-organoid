@@ -154,7 +154,7 @@ scratch:
   num_train_workers: 4
   num_val_workers: 2
   max_data_epochs: 20
-  target_epoch_size: 500
+  target_epoch_size: 170
   hybrid_repeats: 1
   context_length: 2
   gather_pred_via_filesys: false
@@ -173,7 +173,7 @@ scratch:
     _partial_: true
     repeats: 1
     dict_key: roboflow100
-    with_seg_masks: false
+    with_seg_masks: true
   gradient_accumulation_steps: 1
   train_batch_size: 2
   collate_fn:
@@ -181,7 +181,7 @@ scratch:
     _partial_: true
     repeats: 1
     dict_key: roboflow100
-    with_seg_masks: false
+    with_seg_masks: true
 trainer:
   _target_: sam3.train.trainer.Trainer
   skip_saving_ckpts: false
@@ -195,7 +195,7 @@ trainer:
   gradient_accumulation_steps: 1
   distributed:
     backend: nccl
-    find_unused_parameters: true
+    find_unused_parameters: false
     gradient_as_bucket_view: true
   loss:
     all:
@@ -324,7 +324,7 @@ trainer:
           query_filter:
             _target_: sam3.train.transforms.filter_query_transforms.FilterFindQueriesWithTooManyOut
             max_num_objects: 200
-        load_segmentation: false
+        load_segmentation: true
         max_ann_per_img: 500000
         multiplier: 1
         max_train_queries: 50000
@@ -343,12 +343,12 @@ trainer:
         _partial_: true
         repeats: 1
         dict_key: roboflow100
-        with_seg_masks: false
+        with_seg_masks: true
     val:
       _target_: sam3.train.data.torch_dataset.TorchDataset
       dataset:
         _target_: sam3.train.data.sam3_image_dataset.Sam3ImageDataset
-        load_segmentation: false
+        load_segmentation: true
         coco_json_loader:
           _target_: sam3.train.data.coco_json_loaders.COCO_FROM_JSON
           include_negatives: true
@@ -389,7 +389,7 @@ trainer:
         _partial_: true
         repeats: 1
         dict_key: roboflow100
-        with_seg_masks: false
+        with_seg_masks: true
   model:
     _target_: sam3.model_builder.build_sam3_image_model
     bpe_path: /home/hmanani/sam3/sam3/assets/bpe_simple_vocab_16e6.txt.gz

@@ -7,7 +7,7 @@ import cv2
 from sam3.model_builder import build_sam3_image_model
 from sam3.model.sam3_image_processor import Sam3Processor
 
-IMAGE_PATH = "images/ctl/231206_Rac1i_50uM_ctl_D2_(15).jpg"
+IMAGE_PATH = "/home/hmanani/data/new_dataset/train/231206_Rac1i_50uM_D0-D4_D2_(10)_jpg.rf.4wTdjTQruOzU42lmxXXj.jpg"
 TEXT_PROMPT = "spherical lumen"
 SCORE_THRESHOLD = 0.25
 
