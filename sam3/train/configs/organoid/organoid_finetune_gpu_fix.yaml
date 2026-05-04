@@ -126,7 +126,7 @@ scratch:
 
   resolution: 1008
   consistent_transform: False
-  max_ann_per_img: 200
+  max_ann_per_img: 500
 
   train_norm_mean: [0.5, 0.5, 0.5]
   train_norm_std: [0.5, 0.5, 0.5]
@@ -141,7 +141,7 @@ scratch:
   context_length: 2
   gather_pred_via_filesys: false
 
-  lr_scale: 0.001
+  lr_scale: 0.0001
   lr_transformer: ${times:8e-4,${scratch.lr_scale}}
   lr_vision_backbone: ${times:2.5e-4,${scratch.lr_scale}}
   lr_language_backbone: ${times:5e-5,${scratch.lr_scale}}

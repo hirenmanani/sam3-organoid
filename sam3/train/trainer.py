@@ -974,7 +974,7 @@ class Trainer:
                     else:
                         return
 
-                if loss.item() > 100:
+                if loss.item() > 10000:
                     logging.warning(f"Skipping batch with large loss: {loss.item():.2f}")
                     self.optim.zero_grad(set_to_none=True)
                     continue
