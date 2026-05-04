@@ -1,395 +1,297 @@
-# SAM 3: Segment Anything with Concepts
+# SAM 3 for Organoid Brightfield Image Analysis
 
-Meta Superintelligence Labs
+**From Detection to Segmentation: A Foundation Model Approach to Organoid Brightfield Image Analysis Using SAM 3**
 
-[Nicolas Carion](https://www.nicolascarion.com/)\*,
-[Laura Gustafson](https://scholar.google.com/citations?user=c8IpF9gAAAAJ&hl=en)\*,
-[Yuan-Ting Hu](https://scholar.google.com/citations?user=E8DVVYQAAAAJ&hl=en)\*,
-[Shoubhik Debnath](https://scholar.google.com/citations?user=fb6FOfsAAAAJ&hl=en)\*,
-[Ronghang Hu](https://ronghanghu.com/)\*,
-[Didac Suris](https://www.didacsuris.com/)\*,
-[Chaitanya Ryali](https://scholar.google.com/citations?user=4LWx24UAAAAJ&hl=en)\*,
-[Kalyan Vasudev Alwala](https://scholar.google.co.in/citations?user=m34oaWEAAAAJ&hl=en)\*,
-[Haitham Khedr](https://hkhedr.com/)\*, Andrew Huang,
-[Jie Lei](https://jayleicn.github.io/),
-[Tengyu Ma](https://scholar.google.com/citations?user=VeTSl0wAAAAJ&hl=en),
-[Baishan Guo](https://scholar.google.com/citations?user=BC5wDu8AAAAJ&hl=en),
-Arpit Kalla, [Markus Marks](https://damaggu.github.io/),
-[Joseph Greer](https://scholar.google.com/citations?user=guL96CkAAAAJ&hl=en),
-Meng Wang, [Peize Sun](https://peizesun.github.io/),
-[Roman Rädle](https://scholar.google.com/citations?user=Tpt57v0AAAAJ&hl=en),
-[Triantafyllos Afouras](https://www.robots.ox.ac.uk/~afourast/),
-[Effrosyni Mavroudi](https://scholar.google.com/citations?user=vYRzGGEAAAAJ&hl=en),
-[Katherine Xu](https://k8xu.github.io/)°,
-[Tsung-Han Wu](https://patrickthwu.com/)°,
-[Yu Zhou](https://yu-bryan-zhou.github.io/)°,
-[Liliane Momeni](https://scholar.google.com/citations?user=Lb-KgVYAAAAJ&hl=en)°,
-[Rishi Hazra](https://rishihazra.github.io/)°,
-[Shuangrui Ding](https://mark12ding.github.io/)°,
-[Sagar Vaze](https://sgvaze.github.io/)°,
-[Francois Porcher](https://scholar.google.com/citations?user=LgHZ8hUAAAAJ&hl=en)°,
-[Feng Li](https://fengli-ust.github.io/)°,
-[Siyuan Li](https://siyuanliii.github.io/)°,
-[Aishwarya Kamath](https://ashkamath.github.io/)°,
-[Ho Kei Cheng](https://hkchengrex.com/)°,
-[Piotr Dollar](https://pdollar.github.io/)†,
-[Nikhila Ravi](https://nikhilaravi.com/)†,
-[Kate Saenko](https://ai.bu.edu/ksaenko.html)†,
-[Pengchuan Zhang](https://pzzhang.github.io/pzzhang/)†,
-[Christoph Feichtenhofer](https://feichtenhofer.github.io/)†
+Hiren Manani · M.S. Computer Science (AI/ML) · Syracuse University · May 2026  
+Advisor: Prof. Michael R. Blatchley · Co-Advisor: Prof. Senem Velipasalar Gursoy
 
-\* core contributor, ° intern, † project lead, order is random within groups
+---
 
-[[`Paper`](https://ai.meta.com/research/publications/sam-3-segment-anything-with-concepts/)]
-[[`Project`](https://ai.meta.com/sam3)]
-[[`Demo`](https://segment-anything.com/)]
-[[`Blog`](https://ai.meta.com/blog/segment-anything-model-3/)]
-[[`BibTeX`](#citing-sam-3)]
+## What This Repository Does
 
-![SAM 3 architecture](assets/model_diagram.png?raw=true) SAM 3 is a unified foundation model for promptable segmentation in images and videos. It can detect, segment, and track objects using text or visual prompts such as points, boxes, and masks. Compared to its predecessor [SAM 2](https://github.com/facebookresearch/sam2), SAM 3 introduces the ability to exhaustively segment all instances of an open-vocabulary concept specified by a short text phrase or exemplars. Unlike prior work, SAM 3 can handle a vastly larger set of open-vocabulary prompts. It achieves 75-80% of human performance on our new [SA-CO benchmark](https://github.com/facebookresearch/sam3?tab=readme-ov-file#sa-co-dataset) which contains 270K unique concepts, over 50 times more than existing benchmarks.
+This repository adapts [SAM 3](https://github.com/facebookresearch/sam3) — Meta's open-vocabulary segmentation model — to automatically detect and segment mouse small intestinal organoids in brightfield microscopy images, **without any manual clicking per image**.
 
-This breakthrough is driven by an innovative data engine that has automatically annotated over 4 million unique concepts, creating the largest high-quality open-vocabulary segmentation dataset to date. In addition, SAM 3 introduces a new model architecture featuring a presence token that improves discrimination between closely related text prompts (e.g., “a player in white” vs. “a player in red”), as well as a decoupled detector–tracker design that minimizes task interference and scales efficiently with data.
+You describe what you're looking for in plain English ("circular", "cell") and SAM 3 finds all matching organoids across your entire image set automatically.
 
-<p align="center">
-  <img src="assets/dog.gif" width=380 />
-  <img src="assets/player.gif" width=380 />
-</p>
+**Key results:**
+| Model | Detections/image | Precision | Recall | F1 |
+|-------|-----------------|-----------|--------|----|
+| TellU (lab baseline) | 112 (mean) | ~0.82 | ~0.80 | ~0.81 |
+| SAM 3 Zero-shot | 122 (multi-prompt) | 0.843 | 0.692 | 0.760 |
+| SAM 3 Fine-tuned | 139 (multi-prompt) | — | — | — |
 
-## Installation
+Fine-tuning improved detection by **+7% to +21%** per prompt over the zero-shot baseline.
 
-### Prerequisites
+---
 
-- Python 3.12 or higher
-- PyTorch 2.7 or higher
-- CUDA-compatible GPU with CUDA 12.6 or higher
+## Repository Structure
 
-1. **Create a new Conda environment:**
+```
+sam3-organoid/
+│
+├── README.md                      ← You are here
+├── EVALUATION_README.md           ← Evaluation & analysis scripts guide
+│
+├── evaluation/                    ← Scripts to evaluate model performance
+│   ├── sam3_eval_script.py        ← Main eval script (HTCondor GPU cluster)
+│   └── ft_eval.py                 ← CLI eval script with arguments
+│
+├── tellu_analysis/                ← TellU vs SAM 3 comparison
+│   └── tellu_analysis.py          ← Generates all comparison figures
+│
+├── find_prompts.py                ← Run multi-prompt detection on one image
+├── multi_image_inference.py       ← Run inference on a folder of images
+├── run_finetuned.py               ← Run the fine-tuned model
+├── normalize_annotations.py       ← Fix COCO bbox coordinates (critical!)
+├── augment_rle.py                 ← Data augmentation pipeline
+├── debug_scores.py                ← Debug detection scores
+│
+├── sam3/                          ← SAM 3 source code (patched for organoids)
+│   └── train/configs/organoid/    ← Fine-tuning configuration files
+│
+├── my_organoid_dataset/           ← Roboflow dataset (COCO JSON format)
+├── organoid_training_logs/        ← Training logs and checkpoints (Job 1)
+├── organoid_training_logs_combined/ ← Training logs (Job 2, expanded dataset)
+│
+├── submit_sam3.sub                ← HTCondor GPU job submit file
+└── run_sam3.sh                    ← Wrapper shell script for cluster jobs
+```
+
+---
+
+## Quick Start
+
+### 1. Prerequisites
 
 ```bash
-conda create -n sam3 python=3.12
-conda deactivate
+# Python 3.10, PyTorch with CUDA
+conda create -n sam3 python=3.10
 conda activate sam3
-```
 
-2. **Install PyTorch with CUDA support:**
+# Install PyTorch for CUDA 11.8 (OrangeGrid RTX 6000 compatible)
+pip install torch==2.3.1+cu118 torchvision --index-url https://download.pytorch.org/whl/cu118
 
-```bash
-pip install torch==2.7.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
-```
-
-3. **Clone the repository and install the package:**
-
-```bash
-git clone https://github.com/facebookresearch/sam3.git
-cd sam3
+# Install SAM 3
+cd ~/sam3
 pip install -e .
+pip install opencv-python einops psutil
 ```
 
-4. **Install additional dependencies for example notebooks or development:**
+### 2. Download the SAM 3 Checkpoint
 
 ```bash
-# For running example notebooks
-pip install -e ".[notebooks]"
+# Authenticate with HuggingFace
+hf auth login   # enter your HF token
 
-# For development
-pip install -e ".[train,dev]"
+# Download checkpoint (~3.45 GB)
+hf download facebook/sam3 sam3.pt --local-dir ./checkpoints/
 ```
 
-## Getting Started
+> ⚠️ **Important:** GitHub's 100MB limit means the checkpoint cannot be stored here.  
+> Always download from HuggingFace directly.
 
-⚠️ Before using SAM 3, please request access to the checkpoints on the SAM 3
-Hugging Face [repo](https://huggingface.co/facebook/sam3). Once accepted, you
-need to be authenticated to download the checkpoints. You can do this by running
-the following [steps](https://huggingface.co/docs/huggingface_hub/en/quick-start#authentication)
-(e.g. `hf auth login` after generating an access token.)
+### 3. Run Detection on Your Images
 
-### Basic Usage
+```bash
+# Edit find_prompts.py to point to your image
+# Change IMAGE_PATH to your image file
+python find_prompts.py
+```
 
+This tests 20+ prompts and shows which ones detect the most organoids.  
+**Key finding:** Shape-based prompts work best — `"cell"`, `"circular"`, `"round cell"`, `"bubble"`.  
+Biological terms like `"organoid"` return **0 detections** (not in SAM 3's vocabulary).
+
+### 4. Run on Multiple Images
+
+```bash
+python multi_image_inference.py
+```
+
+---
+
+## Fine-Tuning on Your Own Organoid Images
+
+### Step 1: Annotate Your Images
+
+1. Upload images to [Roboflow](https://roboflow.com)
+2. Create an **Instance Segmentation** project
+3. Label organoids using Smart Polygon tool
+4. Export in **COCO JSON** format
+5. Download to `my_organoid_dataset/`
+
+### Step 2: Fix COCO Annotation Coordinates (Critical!)
+
+> ⚠️ **This is the most important step.** SAM 3's dataset loader expects **normalized [0,1] coordinates**, but Roboflow exports **absolute pixel coordinates**. If you skip this step, bbox loss will be 0.0 throughout training and the model will not learn.
+
+```bash
+python normalize_annotations.py \
+    --input  my_organoid_dataset/organoid-segmentation/train/_annotations.coco.json \
+    --output my_organoid_dataset/organoid-segmentation/train/_annotations_normalized.coco.json
+```
+
+Verify the fix:
 ```python
-import torch
-#################################### For Image ####################################
-from PIL import Image
-from sam3.model_builder import build_sam3_image_model
-from sam3.model.sam3_image_processor import Sam3Processor
-# Load the model
-model = build_sam3_image_model()
-processor = Sam3Processor(model)
-# Load an image
-image = Image.open("<YOUR_IMAGE_PATH.jpg>")
-inference_state = processor.set_image(image)
-# Prompt the model with text
-output = processor.set_text_prompt(state=inference_state, prompt="<YOUR_TEXT_PROMPT>")
-
-# Get the masks, bounding boxes, and scores
-masks, boxes, scores = output["masks"], output["boxes"], output["scores"]
-
-#################################### For Video ####################################
-
-from sam3.model_builder import build_sam3_video_predictor
-
-video_predictor = build_sam3_video_predictor()
-video_path = "<YOUR_VIDEO_PATH>" # a JPEG folder or an MP4 video file
-# Start a session
-response = video_predictor.handle_request(
-    request=dict(
-        type="start_session",
-        resource_path=video_path,
-    )
-)
-response = video_predictor.handle_request(
-    request=dict(
-        type="add_prompt",
-        session_id=response["session_id"],
-        frame_index=0, # Arbitrary frame index
-        text="<YOUR_TEXT_PROMPT>",
-    )
-)
-output = response["outputs"]
+import json
+with open("_annotations_normalized.coco.json") as f:
+    d = json.load(f)
+bbox = d["annotations"][0]["bbox"]
+print(bbox)  # Should be like [0.74, 0.82, 0.04, 0.07] — all values between 0 and 1
 ```
 
-## Examples
-
-The `examples` directory contains notebooks demonstrating how to use SAM3 with
-various types of prompts:
-
-- [`sam3_image_predictor_example.ipynb`](examples/sam3_image_predictor_example.ipynb)
-  : Demonstrates how to prompt SAM 3 with text and visual box prompts on images.
-- [`sam3_video_predictor_example.ipynb`](examples/sam3_video_predictor_example.ipynb)
-  : Demonstrates how to prompt SAM 3 with text prompts on videos, and doing
-  further interactive refinements with points.
-- [`sam3_image_batched_inference.ipynb`](examples/sam3_image_batched_inference.ipynb)
-  : Demonstrates how to run batched inference with SAM 3 on images.
-- [`sam3_agent.ipynb`](examples/sam3_agent.ipynb): Demonsterates the use of SAM
-  3 Agent to segment complex text prompt on images.
-- [`saco_gold_silver_vis_example.ipynb`](examples/saco_gold_silver_vis_example.ipynb)
-  : Shows a few examples from SA-Co image evaluation set.
-- [`saco_veval_vis_example.ipynb`](examples/saco_veval_vis_example.ipynb) :
-  Shows a few examples from SA-Co video evaluation set.
-
-There are additional notebooks in the examples directory that demonstrate how to
-use SAM 3 for interactive instance segmentation in images and videos (SAM 1/2
-tasks), or as a tool for an MLLM, and how to run evaluations on the SA-Co
-dataset.
-
-To run the Jupyter notebook examples:
+### Step 3: Augment Your Dataset
 
 ```bash
-# Make sure you have the notebooks dependencies installed
-pip install -e ".[notebooks]"
-
-# Start Jupyter notebook
-jupyter notebook examples/sam3_image_predictor_example.ipynb
+python augment_rle.py \
+    --input  my_organoid_dataset/organoid-segmentation/train/_annotations_normalized.coco.json \
+    --output my_organoid_dataset/augmented/ \
+    --factor 5
 ```
 
-## Model
+This creates horizontal flip, vertical flip, 90° rotation, and brightness/contrast variants (5× expansion).
 
-SAM 3 consists of a detector and a tracker that share a vision encoder. It has 848M parameters. The
-detector is a DETR-based model conditioned on text, geometry, and image
-exemplars. The tracker inherits the SAM 2 transformer encoder-decoder
-architecture, supporting video segmentation and interactive refinement.
+### Step 4: Configure Fine-Tuning
 
-## Image Results
+Edit `sam3/train/configs/organoid/organoid_finetune_gpu.yaml`:
 
-<div align="center">
-<table style="min-width: 80%; border: 2px solid #ddd; border-collapse: collapse">
-  <thead>
-    <tr>
-      <th rowspan="3" style="border-right: 2px solid #ddd; padding: 12px 20px">Model</th>
-      <th colspan="3" style="text-align: center; border-right: 2px solid #ddd; padding: 12px 20px">Instance Segmentation</th>
-      <th colspan="5" style="text-align: center; padding: 12px 20px">Box Detection</th>
-    </tr>
-    <tr>
-      <th colspan="2" style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">LVIS</th>
-      <th style="text-align: center; border-right: 2px solid #ddd; padding: 12px 20px">SA-Co/Gold</th>
-      <th colspan="2" style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">LVIS</th>
-      <th colspan="2" style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">COCO</th>
-      <th style="text-align: center; padding: 12px 20px">SA-Co/Gold</th>
-    </tr>
-    <tr>
-      <th style="text-align: center; padding: 12px 20px">cgF1</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">AP</th>
-      <th style="text-align: center; border-right: 2px solid #ddd; padding: 12px 20px">cgF1</th>
-      <th style="text-align: center; padding: 12px 20px">cgF1</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">AP</th>
-      <th style="text-align: center; padding: 12px 20px">AP</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">AP<sub>o</sub>
-</th>
-      <th style="text-align: center; padding: 12px 20px">cgF1</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="border-right: 2px solid #ddd; padding: 10px 20px">Human</td>
-      <td style="text-align: center; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 2px solid #ddd; padding: 10px 20px">72.8</td>
-      <td style="text-align: center; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; padding: 10px 20px">74.0</td>
-    </tr>
-    <tr>
-      <td style="border-right: 2px solid #ddd; padding: 10px 20px">OWLv2*</td>
-      <td style="text-align: center; padding: 10px 20px; color: #999">29.3</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px; color: #999">43.4</td>
-      <td style="text-align: center; border-right: 2px solid #ddd; padding: 10px 20px">24.6</td>
-      <td style="text-align: center; padding: 10px 20px; color: #999">30.2</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px; color: #999">45.5</td>
-      <td style="text-align: center; padding: 10px 20px">46.1</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">23.9</td>
-      <td style="text-align: center; padding: 10px 20px">24.5</td>
-    </tr>
-    <tr>
-      <td style="border-right: 2px solid #ddd; padding: 10px 20px">DINO-X</td>
-      <td style="text-align: center; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">38.5</td>
-      <td style="text-align: center; border-right: 2px solid #ddd; padding: 10px 20px">21.3</td>
-      <td style="text-align: center; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">52.4</td>
-      <td style="text-align: center; padding: 10px 20px">56.0</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; padding: 10px 20px">22.5</td>
-    </tr>
-    <tr>
-      <td style="border-right: 2px solid #ddd; padding: 10px 20px">Gemini 2.5</td>
-      <td style="text-align: center; padding: 10px 20px">13.4</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 2px solid #ddd; padding: 10px 20px">13.0</td>
-      <td style="text-align: center; padding: 10px 20px">16.1</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; padding: 10px 20px">-</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; padding: 10px 20px">14.4</td>
-    </tr>
-    <tr style="border-top: 2px solid #b19c9cff">
-      <td style="border-right: 2px solid #ddd; padding: 10px 20px">SAM 3</td>
-      <td style="text-align: center; padding: 10px 20px">37.2</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">48.5</td>
-      <td style="text-align: center; border-right: 2px solid #ddd; padding: 10px 20px">54.1</td>
-      <td style="text-align: center; padding: 10px 20px">40.6</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">53.6</td>
-      <td style="text-align: center; padding: 10px 20px">56.4</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">55.7</td>
-      <td style="text-align: center; padding: 10px 20px">55.7</td>
-    </tr>
-  </tbody>
-</table>
+```yaml
+# Key parameters to check:
+dataset_key: roboflow100          # Must match your dataset key
+img_folder: /path/to/your/images/
+ann_file: /path/to/_annotations_normalized.coco.json
 
-<p style="text-align: center; margin-top: 10px; font-size: 0.9em; color: #ddd;">* Partially trained on LVIS, AP<sub>o</sub> refers to COCO-O accuracy</p>
+# Loss routing — MUST include your dataset key
+loss_fns_find:
+  roboflow100: ${roboflow_train.loss}   # ← This line is critical
 
-</div>
+# Matcher cost weights (tuned for single-category datasets)
+cost_class: 0.1     # Low — spatial overlap drives matching, not class
+cost_bbox: 5.0
+cost_giou: 2.0
 
-## Video Results
+# Learning rate scale
+lr_scale: 0.01      # 100× increase from default 0.0001
+```
 
-<div align="center">
-<table style="min-width: 80%; border: 2px solid #ddd; border-collapse: collapse">
-  <thead>
-    <tr>
-      <th rowspan="2" style="border-right: 2px solid #ddd; padding: 12px 20px">Model</th>
-      <th colspan="2" style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">SA-V test</th>
-      <th colspan="2" style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">YT-Temporal-1B test</th>
-      <th colspan="2" style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">SmartGlasses test</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">LVVIS test</th>
-      <th style="text-align: center; padding: 12px 20px">BURST test</th>
-    </tr>
-    <tr>
-      <th style="text-align: center; padding: 12px 20px">cgF1</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">pHOTA</th>
-      <th style="text-align: center; padding: 12px 20px">cgF1</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">pHOTA</th>
-      <th style="text-align: center; padding: 12px 20px">cgF1</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">pHOTA</th>
-      <th style="text-align: center; border-right: 1px solid #eee; padding: 12px 20px">mAP</th>
-      <th style="text-align: center; padding: 12px 20px">HOTA</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="border-right: 2px solid #ddd; padding: 10px 20px">Human</td>
-      <td style="text-align: center; padding: 10px 20px">53.1</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">70.5</td>
-      <td style="text-align: center; padding: 10px 20px">71.2</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">78.4</td>
-      <td style="text-align: center; padding: 10px 20px">58.5</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">72.3</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">-</td>
-      <td style="text-align: center; padding: 10px 20px">-</td>
-    </tr>
-    <tr style="border-top: 2px solid #b19c9cff">
-      <td style="border-right: 2px solid #ddd; padding: 10px 20px">SAM 3</td>
-      <td style="text-align: center; padding: 10px 20px">30.3</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">58.0</td>
-      <td style="text-align: center; padding: 10px 20px">50.8</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">69.9</td>
-      <td style="text-align: center; padding: 10px 20px">36.4</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">63.6</td>
-      <td style="text-align: center; border-right: 1px solid #eee; padding: 10px 20px">36.3</td>
-      <td style="text-align: center; padding: 10px 20px">44.5</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-## SA-Co Dataset
-
-We release 2 image benchmarks, [SA-Co/Gold](scripts/eval/gold/README.md) and
-[SA-Co/Silver](scripts/eval/silver/README.md), and a video benchmark
-[SA-Co/VEval](scripts/eval/veval/README.md). The datasets contain images (or videos) with annotated noun phrases. Each image/video and noun phrase pair is annotated with instance masks and unique IDs of each object matching the phrase. Phrases that have no matching objects (negative prompts) have no masks, shown in red font in the figure. See the linked READMEs for more details on how to download and run evaluations on the datasets.
-
-* HuggingFace host: [SA-Co/Gold](https://huggingface.co/datasets/facebook/SACo-Gold), [SA-Co/Silver](https://huggingface.co/datasets/facebook/SACo-Silver) and [SA-Co/VEval](https://huggingface.co/datasets/facebook/SACo-VEval)
-* Roboflow host: [SA-Co/Gold](https://universe.roboflow.com/sa-co-gold), [SA-Co/Silver](https://universe.roboflow.com/sa-co-silver) and [SA-Co/VEval](https://universe.roboflow.com/sa-co-veval)
-
-![SA-Co dataset](assets/sa_co_dataset.jpg?raw=true)
-
-## Development
-
-To set up the development environment:
+### Step 5: Submit to GPU Cluster (OrangeGrid)
 
 ```bash
-pip install -e ".[dev,train]"
+# Edit run_sam3.sh to point to your config
+condor_submit submit_sam3.sub
+
+# Monitor
+condor_q
+tail -f ~/sam3_train.out
 ```
 
-To format the code:
+**Expected training output:**
+```
+Epoch 0, batch 0: loss=0.434
+Epoch 0, batch 50: loss=0.371
+Epoch 0, batch 170: loss=0.296
+```
+
+If you see `loss_bbox: 0.0` — check Step 2 (normalization) and the loss routing config.
+
+### Step 6: Run Inference with Fine-Tuned Model
 
 ```bash
-ufmt format .
+python run_finetuned.py
 ```
 
-## Contributing
+---
 
-See [contributing](CONTRIBUTING.md) and the
-[code of conduct](CODE_OF_CONDUCT.md).
+## Common Errors & Fixes
 
-## License
+These 10 issues were encountered and resolved during this project:
 
-This project is licensed under the SAM License - see the [LICENSE](LICENSE) file
-for details.
+| # | Error | Fix |
+|---|-------|-----|
+| 1 | HTCondor job sits idle for days | Use `+request_gpus = 1` (lowercase, with `+`) not `request_GPUs` |
+| 2 | `RuntimeError: CUDA not available` | Reinstall PyTorch for correct CUDA version (`cu118` for RTX 6000) |
+| 3 | `Error: config not found` | Add empty `__init__.py` to `configs/organoid/` folder |
+| 4 | `EOFError` loading checkpoint | Re-download from HuggingFace — GitHub truncates files >100MB to 0 bytes |
+| 5 | `loss_bbox = 0.0` throughout training | Add `roboflow100: ${roboflow_train.loss}` to loss config section |
+| 6 | **`loss_bbox = 0.0` — annotations issue** | **Run `normalize_annotations.py` — Roboflow exports absolute pixels, SAM 3 needs [0,1]** |
+| 7 | `RuntimeError: CPU/GPU tensor mismatch` | Patch `decoder.py`: add `.to(boxes_xyxy.device)` to coordinate tensors |
+| 8 | `GradScaler` crash with bfloat16 | Set `enabled: false` in AMP config |
+| 9 | Half of batches produce zero matches | Remove empty category 0 ("objects") from COCO JSON |
+| 10 | `DDP unused parameter` crash | Freeze `vision_backbone.convs` and `text_projection` before DDP init |
 
-## Acknowledgements
+> **Bug #6 is the most critical.** SAM 3's loader multiplies your coordinates by image dimensions internally. If you pass `x=2297` (absolute pixels), it computes `2297 × 3088 = 7,093,936` — completely off-screen. The Hungarian matcher finds zero valid matches and no gradients flow to the detection head.
 
-We would like to thank the following people for their contributions to the SAM 3 project: Alex He, Alexander Kirillov,
-Alyssa Newcomb, Ana Paula Kirschner Mofarrej, Andrea Madotto, Andrew Westbury, Ashley Gabriel, Azita Shokpour,
-Ben Samples, Bernie Huang, Carleigh Wood, Ching-Feng Yeh, Christian Puhrsch, Claudette Ward, Daniel Bolya,
-Daniel Li, Facundo Figueroa, Fazila Vhora, George Orlin, Hanzi Mao, Helen Klein, Hu Xu, Ida Cheng, Jake Kinney,
-Jiale Zhi, Jo Sampaio, Joel Schlosser, Justin Johnson, Kai Brown, Karen Bergan, Karla Martucci, Kenny Lehmann,
-Maddie Mintz, Mallika Malhotra, Matt Ward, Michelle Chan, Michelle Restrepo, Miranda Hartley, Muhammad Maaz,
-Nisha Deo, Peter Park, Phillip Thomas, Raghu Nayani, Rene Martinez Doehner, Robbie Adkins, Ross Girshik, Sasha
-Mitts, Shashank Jain, Spencer Whitehead, Ty Toledano, Valentin Gabeur, Vincent Cho, Vivian Lee, William Ngan,
-Xuehai He, Yael Yungster, Ziqi Pang, Ziyi Dou, Zoe Quake.
+---
 
-## Citing SAM 3
+## Dataset Information
 
-If you use SAM 3 or the SA-Co dataset in your research, please use the following BibTeX entry.
+- **Organism:** Mouse small intestinal organoids (Lgr5+ stem cells)
+- **Culture:** Matrigel (Corning 356231), ENRCV media
+- **Microscope:** Olympus CKX53, brightfield, no fluorescence
+- **Acquired:** Anseth Lab, University of Colorado Anschutz Medical Campus
+- **Conditions:** Control, D0–D2 Rac1i, D0–D4, D0–D6, D2–D6, D4–D6 (50µM)
+- **Time points:** Day 2, Day 4, Day 6
+- **Scale bar:** 200 µm (consistent across all images)
+- **Annotations:** ~220 images, 140,065+ COCO bounding boxes via Roboflow
+
+---
+
+## Comparison with TellU
+
+TellU is the organoid analysis tool currently used in the Blatchley laboratory.  
+SAM 3 was evaluated against TellU on the same 20 test images:
+
+```
+python tellu_analysis/tellu_analysis.py \
+    --tellu_dir /path/to/TellU/runs/detect/Test \
+    --out_dir   comparison_figures/
+```
+
+| Metric | TellU | SAM 3 Baseline | SAM 3 Fine-tuned |
+|--------|-------|----------------|-----------------|
+| Mean detections | 112 | 122 | 139 |
+| Count agreement | — | 90.9% | 76.0%* |
+| Morphology classes | 4 | 1 | 1 |
+
+\* Fine-tuned over-detects relative to TellU — reflects improved sensitivity.
+
+**Key difference:** TellU classifies organoids into Spheroid/Cyst/EarlyOrganoid/LateOrganoid.  
+SAM 3 currently outputs binary (organoid/not). Morphology classification is future work.
+
+---
+
+## Citation
+
+If you use this work, please cite:
+
+```bibtex
+@mastersthesis{manani2026sam3organoid,
+  author  = {Hiren Manani},
+  title   = {From Detection to Segmentation: A Foundation Model Approach
+             to Organoid Brightfield Image Analysis Using SAM 3},
+  school  = {Syracuse University},
+  year    = {2026},
+  advisor = {Michael R. Blatchley}
+}
+```
+
+Also cite the original SAM 3 paper:
 
 ```bibtex
 @misc{carion2025sam3segmentconcepts,
-      title={SAM 3: Segment Anything with Concepts},
-      author={Nicolas Carion and Laura Gustafson and Yuan-Ting Hu and Shoubhik Debnath and Ronghang Hu and Didac Suris and Chaitanya Ryali and Kalyan Vasudev Alwala and Haitham Khedr and Andrew Huang and Jie Lei and Tengyu Ma and Baishan Guo and Arpit Kalla and Markus Marks and Joseph Greer and Meng Wang and Peize Sun and Roman Rädle and Triantafyllos Afouras and Effrosyni Mavroudi and Katherine Xu and Tsung-Han Wu and Yu Zhou and Liliane Momeni and Rishi Hazra and Shuangrui Ding and Sagar Vaze and Francois Porcher and Feng Li and Siyuan Li and Aishwarya Kamath and Ho Kei Cheng and Piotr Dollár and Nikhila Ravi and Kate Saenko and Pengchuan Zhang and Christoph Feichtenhofer},
-      year={2025},
-      eprint={2511.16719},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2511.16719},
+  title   = {SAM 3: Segment Anything with Concepts},
+  author  = {Nicolas Carion and Laura Gustafson and Yuan-Ting Hu et al.},
+  year    = {2025},
+  eprint  = {2511.16719},
+  url     = {https://arxiv.org/abs/2511.16719}
 }
 ```
+
+---
+
+## Contact
+
+**Hiren Manani**  
+hmanani@syr.edu · [github.com/hirenmanani](https://github.com/hirenmanani) · [hirenmanani.github.io/portfolio](https://hirenmanani.github.io/portfolio)
+
+For biological questions about the dataset, contact:  
+**Prof. Michael R. Blatchley** · mrblatch@syr.edu · Syracuse University
